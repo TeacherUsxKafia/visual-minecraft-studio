@@ -3,1222 +3,914 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visual Minecraft Plugin Creator Studio</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Minecraft Plugin Studio</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1a1f35 100%);
-            color: #e2e8f0;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            overflow: hidden;
         }
 
-        .code-editor {
-            font-family: 'Courier New', monospace;
-            background: #0f172a;
-            color: #e2e8f0;
-            border: 1px solid #334155;
-            resize: none;
-            padding: 1rem;
-            line-height: 1.6;
+        /* HEADER */
+        header {
+            background: #0a0a0a;
+            padding: 12px 20px;
+            border-bottom: 3px solid #4CAF50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
         }
 
-        .tree-item {
-            user-select: none;
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .btn-download {
+            background: #4CAF50;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
             cursor: pointer;
-            padding: 0.4rem 0.5rem;
-            border-radius: 0.375rem;
-            transition: all 0.2s ease;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .btn-download:hover {
+            background: #45a049;
+        }
+
+        /* MAIN LAYOUT */
+        main {
+            display: flex;
+            height: calc(100vh - 60px);
+            gap: 0;
+        }
+
+        /* LEFT SIDEBAR */
+        .sidebar-left {
+            width: 320px;
+            background: #242424;
+            border-right: 2px solid #333;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-section {
+            padding: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .section-title {
+            color: #4CAF50;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-label {
             display: block;
-            margin: 0.2rem 0;
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 4px;
+            font-weight: bold;
         }
 
-        .tree-item:hover {
-            background: rgba(79, 172, 254, 0.1);
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 8px;
+            background: #1a1a1a;
+            border: 1px solid #4CAF50;
+            color: #e0e0e0;
+            border-radius: 3px;
+            font-size: 12px;
         }
 
-        .tree-item.selected {
-            background: #3b82f6;
-            color: white;
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #66BB6A;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
         }
 
-        .tree-item-icon {
-            display: inline-block;
-            width: 1rem;
-            margin-right: 0.25rem;
-            text-align: center;
-            transition: transform 0.2s ease;
+        /* QUICK CREATE SECTION */
+        .quick-create {
+            background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
+            border: 2px solid #4CAF50;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 0;
         }
 
-        .tree-item.collapsed .tree-item-icon {
-            transform: rotate(-90deg);
+        .quick-input {
+            width: 100%;
+            padding: 10px;
+            background: #0a0a0a;
+            border: 1px solid #4CAF50;
+            color: #e0e0e0;
+            border-radius: 3px;
+            margin-bottom: 10px;
+            font-size: 12px;
         }
 
-        .button-primary {
-            @apply px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 cursor-pointer;
+        .quick-input::placeholder {
+            color: #666;
         }
 
-        .button-secondary {
-            @apply px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-100 rounded-md text-sm transition-all duration-200 cursor-pointer;
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
         }
 
-        .button-danger {
-            @apply px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs transition-all duration-200 cursor-pointer;
-        }
-
-        .input-field {
-            @apply w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-md text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-200;
-        }
-
-        .select-field {
-            @apply w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-200;
-        }
-
-        .panel {
-            background: linear-gradient(to bottom, #1e293b, #0f172a);
-            border: 1px solid #334155;
-            border-radius: 0.5rem;
-            padding: 1rem;
-        }
-
-        .panel-title {
-            @apply text-lg font-semibold mb-4 text-emerald-400 flex items-center gap-2;
-        }
-
-        .quick-create-panel {
-            background: linear-gradient(to bottom, #1e293b, #0f172a);
-            border: 2px solid #10b981;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
-        }
-
-        .quick-create-title {
-            @apply text-sm font-bold mb-3 text-emerald-300 flex items-center gap-2;
-        }
-
-        .quick-create-input {
-            @apply w-full px-3 py-2 bg-slate-800 border border-emerald-500 rounded-md text-slate-100 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500 transition-all duration-200 mb-2;
-        }
-
-        .quick-create-buttons {
-            @apply flex gap-2;
-        }
-
-        .quick-create-buttons button {
-            @apply flex-1 px-3 py-2 rounded-md font-medium text-sm transition-all duration-200 cursor-pointer;
+        .btn-quick {
+            padding: 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: all 0.2s;
         }
 
         .btn-add-file {
-            @apply bg-cyan-600 hover:bg-cyan-700 text-white;
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-add-file:hover {
+            background: #0b7dda;
         }
 
         .btn-add-folder {
-            @apply bg-indigo-600 hover:bg-indigo-700 text-white;
+            background: #FF9800;
+            color: white;
         }
 
-        .error-banner {
-            @apply p-3 mb-3 bg-red-900 border border-red-700 rounded-md text-red-200 text-sm;
+        .btn-add-folder:hover {
+            background: #e68900;
+        }
+
+        .btn-quick:active {
+            transform: scale(0.95);
+        }
+
+        .status-message {
+            padding: 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-top: 8px;
+            display: none;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .status-message.show {
+            display: block;
+        }
+
+        .status-success {
+            background: #2e7d32;
+            color: #c8e6c9;
+        }
+
+        .status-error {
+            background: #c62828;
+            color: #ffcdd2;
+        }
+
+        .help-text {
+            font-size: 10px;
+            color: #888;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        /* FILE TREE */
+        .file-tree-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .file-tree-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .file-tree-container::-webkit-scrollbar-thumb {
+            background: #4CAF50;
+            border-radius: 4px;
+        }
+
+        .tree-item {
+            padding: 8px 10px;
+            margin: 2px 0;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+            transition: all 0.15s;
+            color: #bbb;
+        }
+
+        .tree-item:hover {
+            background: #333;
+            color: #e0e0e0;
+        }
+
+        .tree-item.selected {
+            background: #4CAF50;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .tree-icon {
+            font-size: 13px;
+        }
+
+        /* CENTER EDITOR */
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1a1a1a;
+            border-right: 2px solid #333;
+        }
+
+        .editor-header {
+            background: #242424;
+            padding: 12px 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-title {
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .btn-delete {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
             display: none;
         }
 
-        .success-banner {
-            @apply p-3 mb-3 bg-emerald-900 border border-emerald-700 rounded-md text-emerald-200 text-sm;
-            display: none;
+        .btn-delete:hover {
+            background: #b71c1c;
         }
 
-        .fade-in {
-            animation: fadeIn 0.3s ease;
+        .code-editor {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #4CAF50;
+            border: none;
+            padding: 15px;
+            font-size: 12px;
+            line-height: 1.6;
+            resize: none;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .code-editor:focus {
+            outline: none;
+        }
+
+        .code-editor:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* RIGHT SIDEBAR */
+        .sidebar-right {
+            width: 280px;
+            background: #242424;
+            border-left: 2px solid #333;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-right::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar-right::-webkit-scrollbar-thumb {
+            background: #4CAF50;
+            border-radius: 4px;
+        }
+
+        .info-section {
+            padding: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .info-label {
+            color: #888;
+        }
+
+        .info-value {
+            color: #4CAF50;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .btn-action {
+            background: #333;
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+            padding: 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            background: #4CAF50;
+            color: #000;
+        }
+
+        .btn-action.danger {
+            color: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+
+        .btn-action.danger:hover {
+            background: #ff6b6b;
+            color: #fff;
+        }
+
+        .docs {
+            padding: 15px;
+            font-size: 11px;
+            color: #888;
+            line-height: 1.6;
+        }
+
+        .doc-title {
+            color: #4CAF50;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .doc-item {
+            margin-bottom: 6px;
+        }
+
+        .doc-item strong {
+            color: #4CAF50;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-    <!-- Header -->
-    <header class="bg-slate-900 border-b border-slate-700 shadow-lg sticky top-0 z-40">
-        <div class="max-w-full mx-auto px-6 py-4 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg">
-                    <span class="text-white font-bold">⛏</span>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-bold text-emerald-400">Plugin Creator Studio</h1>
-                    <p class="text-xs text-slate-400">Visual Minecraft Development Environment</p>
-                </div>
-            </div>
-            <button onclick="app.downloadJAR()" class="button-primary flex items-center gap-2 shadow-lg">
-                <span>📦</span>
-                <span>Download Working JAR</span>
-            </button>
-        </div>
+<body>
+    <header>
+        <div class="logo">⛏️ Plugin Studio</div>
+        <button class="btn-download" onclick="game.downloadJAR()">📦 Download JAR</button>
     </header>
 
-    <!-- Main Container -->
-    <main class="flex h-[calc(100vh-80px)] gap-4 p-4 bg-slate-950 overflow-hidden">
-        <!-- Left Panel: Configuration & File Tree -->
-        <div class="flex flex-col gap-4 w-80 overflow-y-auto scrollbar-hide">
-            <!-- Configuration Panel -->
-            <div class="panel">
-                <div class="panel-title">⚙️ Project Configuration</div>
+    <main>
+        <!-- LEFT SIDEBAR: CONFIG + QUICK CREATE -->
+        <div class="sidebar-left">
+            <!-- Configuration Section -->
+            <div class="sidebar-section">
+                <div class="section-title">⚙️ Plugin Config</div>
                 
-                <div class="space-y-3">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300 block mb-1">Plugin Name</label>
-                        <input type="text" id="pluginName" placeholder="e.g., MyAwesomePlugin" class="input-field" value="MyAwesomePlugin" onchange="app.updateConfig()">
-                    </div>
+                <div class="form-group">
+                    <label class="form-label">Plugin Name</label>
+                    <input type="text" id="cfgName" value="MyPlugin" onchange="game.onConfigChange()">
+                </div>
 
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300 block mb-1">JAR Name</label>
-                        <input type="text" id="jarName" placeholder="e.g., MyAwesomePlugin-1.0.jar" class="input-field" value="MyAwesomePlugin-1.0.jar" onchange="app.updateConfig()">
-                    </div>
+                <div class="form-group">
+                    <label class="form-label">JAR Name</label>
+                    <input type="text" id="cfgJar" value="MyPlugin-1.0.jar" onchange="game.onConfigChange()">
+                </div>
 
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300 block mb-1">Creator/Author Name</label>
-                        <input type="text" id="authorName" placeholder="e.g., YourName" class="input-field" value="YourName" onchange="app.updateConfig()">
-                    </div>
+                <div class="form-group">
+                    <label class="form-label">Author</label>
+                    <input type="text" id="cfgAuthor" value="Developer" onchange="game.onConfigChange()">
+                </div>
 
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300 block mb-1">Minecraft Version</label>
-                        <select id="minecraftVersion" class="select-field" onchange="app.updateConfig()">
-                            <option value="1.8">1.8</option>
-                            <option value="1.12">1.12</option>
-                            <option value="1.16">1.16</option>
-                            <option value="1.20" selected>1.20</option>
-                            <option value="Latest">Latest</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300 block mb-1">Java Version</label>
-                        <select id="javaVersion" class="select-field" onchange="app.updateConfig()">
-                            <option value="8">Java 8</option>
-                            <option value="11">Java 11</option>
-                            <option value="17" selected>Java 17</option>
-                            <option value="21">Java 21</option>
-                        </select>
-                    </div>
-
-                    <div class="flex items-center gap-2 mt-4 p-3 bg-slate-800 rounded-lg">
-                        <input type="checkbox" id="crossVersionCompat" class="w-4 h-4 cursor-pointer" onchange="app.updateConfig()">
-                        <label for="crossVersionCompat" class="text-sm text-slate-300 cursor-pointer flex-1">Cross-Version Compatibility</label>
-                    </div>
+                <div class="form-group">
+                    <label class="form-label">MC Version</label>
+                    <select id="cfgVersion" onchange="game.onConfigChange()">
+                        <option>1.20</option>
+                        <option>1.19</option>
+                        <option>1.18</option>
+                    </select>
                 </div>
             </div>
 
-            <!-- Quick Create Panel - NEW STATIC INTERFACE -->
-            <div class="quick-create-panel fade-in">
-                <div class="quick-create-title">
-                    <span>⚡ Quick Create Item</span>
-                </div>
+            <!-- Quick Create Section -->
+            <div class="sidebar-section quick-create">
+                <div class="section-title">✨ Quick Create</div>
                 
-                <!-- Error Banner -->
-                <div id="quickCreateError" class="error-banner"></div>
-                
-                <!-- Success Banner -->
-                <div id="quickCreateSuccess" class="success-banner"></div>
-                
-                <!-- Input Field -->
                 <input 
                     type="text" 
-                    id="quickCreateInput" 
-                    class="quick-create-input" 
-                    placeholder="Enter filename with extension (e.g., Helper.java) or folder name"
-                    onkeypress="app.handleQuickCreateKeypress(event)"
+                    class="quick-input" 
+                    id="quickInput" 
+                    placeholder="Enter file/folder name"
+                    onkeypress="game.handleEnter(event)"
                 >
-                
-                <!-- Buttons -->
-                <div class="quick-create-buttons">
-                    <button class="btn-add-file" onclick="app.quickCreateFile()">
-                        📄 Add File
-                    </button>
-                    <button class="btn-add-folder" onclick="app.quickCreateFolder()">
-                        📁 Add Folder
-                    </button>
+
+                <div class="button-group">
+                    <button class="btn-quick btn-add-file" onclick="game.createFile()">📄 Add File</button>
+                    <button class="btn-quick btn-add-folder" onclick="game.createFolder()">📁 Add Folder</button>
                 </div>
-                
-                <!-- Helper Text -->
-                <p class="text-xs text-slate-400 mt-2">
-                    <strong>Tip:</strong> Select a folder first by clicking it, then add items to it.
-                </p>
+
+                <div id="quickStatus" class="status-message"></div>
+
+                <div class="help-text">
+                    💡 Click a folder to select it, then add items. Files need .ext (like .java)
+                </div>
             </div>
 
-            <!-- File Tree Panel -->
-            <div class="panel flex-1 overflow-y-auto">
-                <div class="panel-title">📁 Project Structure</div>
+            <!-- File Tree Section -->
+            <div class="sidebar-section">
+                <div class="section-title">📂 Files</div>
+            </div>
 
-                <div id="fileTree" class="text-sm space-y-1">
-                    <!-- File tree will be populated here -->
-                </div>
+            <div class="file-tree-container" id="fileTree">
+                <!-- Files rendered here -->
             </div>
         </div>
 
-        <!-- Center Panel: Code Editor -->
-        <div class="flex-1 flex flex-col gap-4 overflow-hidden">
-            <div class="panel flex-1 flex flex-col overflow-hidden">
-                <div class="panel-title flex justify-between items-center">
-                    <span id="editorTitle">📄 Select a file to edit</span>
-                    <div class="flex gap-2">
-                        <button onclick="app.deleteCurrentFile()" class="button-danger" id="deleteFileBtn" style="display:none;">Delete</button>
-                    </div>
-                </div>
-                
-                <textarea 
-                    id="codeEditor" 
-                    class="code-editor flex-1"
-                    placeholder="Select a file to edit its contents..."
-                    onchange="app.saveCurrentFile()"
-                    onkeyup="app.saveCurrentFile()"
-                ></textarea>
+        <!-- CENTER: CODE EDITOR -->
+        <div class="editor-container">
+            <div class="editor-header">
+                <div class="editor-title" id="editorTitle">👉 Click a file to edit</div>
+                <button class="btn-delete" id="btnDeleteFile" onclick="game.deleteFile()">🗑️ Delete</button>
             </div>
+            <textarea 
+                id="codeEditor" 
+                class="code-editor" 
+                placeholder="Click a file in the left panel to edit it here..."
+                onchange="game.saveCode()"
+                onkeyup="game.saveCode()"
+            ></textarea>
         </div>
 
-        <!-- Right Panel: Build Info & Preview -->
-        <div class="w-72 flex flex-col gap-4 overflow-y-auto scrollbar-hide">
-            <div class="panel">
-                <div class="panel-title">📊 Build Information</div>
-                <div class="space-y-2 text-sm">
-                    <div class="flex justify-between p-2 bg-slate-800 rounded">
-                        <span class="text-slate-400">Total Files:</span>
-                        <span id="totalFiles" class="font-semibold text-emerald-400">0</span>
-                    </div>
-                    <div class="flex justify-between p-2 bg-slate-800 rounded">
-                        <span class="text-slate-400">Total Folders:</span>
-                        <span id="totalFolders" class="font-semibold text-cyan-400">0</span>
-                    </div>
-                    <div class="flex justify-between p-2 bg-slate-800 rounded">
-                        <span class="text-slate-400">Plugin Name:</span>
-                        <span id="displayPluginName" class="font-semibold text-slate-200">MyAwesomePlugin</span>
-                    </div>
-                    <div class="flex justify-between p-2 bg-slate-800 rounded">
-                        <span class="text-slate-400">JAR Output:</span>
-                        <span id="displayJarName" class="font-semibold text-slate-200 truncate">MyAwesomePlugin-1.0.jar</span>
-                    </div>
+        <!-- RIGHT SIDEBAR: INFO + ACTIONS -->
+        <div class="sidebar-right">
+            <!-- Build Info -->
+            <div class="info-section">
+                <div class="section-title">📊 Project Info</div>
+                <div class="info-row">
+                    <span class="info-label">Files:</span>
+                    <span class="info-value" id="statFiles">0</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Folders:</span>
+                    <span class="info-value" id="statFolders">0</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Name:</span>
+                    <span class="info-value" id="statName">MyPlugin</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">JAR:</span>
+                    <span class="info-value" id="statJar">MyPlugin-1.0.jar</span>
                 </div>
             </div>
 
-            <div class="panel">
-                <div class="panel-title">⚡ Quick Actions</div>
-                <div class="space-y-2">
-                    <button onclick="app.createDefaultStructure()" class="w-full button-secondary text-left">Reset to Default Structure</button>
-                    <button onclick="app.clearAllFiles()" class="w-full button-secondary text-left text-red-400 hover:bg-red-900">Clear All Files</button>
-                    <button onclick="app.exportAsJSON()" class="w-full button-secondary text-left">Export Project as JSON</button>
-                </div>
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn-action" onclick="game.resetDefault()">🔄 Reset Default</button>
+                <button class="btn-action" onclick="game.exportJSON()">💾 Export JSON</button>
+                <button class="btn-action danger" onclick="game.clearAll()">🗑️ Clear All</button>
             </div>
 
-            <div class="panel">
-                <div class="panel-title">📚 Documentation</div>
-                <div class="text-xs text-slate-400 space-y-2">
-                    <p><strong class="text-emerald-400">Tip 1:</strong> Click files to edit them in the center panel.</p>
-                    <p><strong class="text-emerald-400">Tip 2:</strong> Right-click items for rename/delete options.</p>
-                    <p><strong class="text-emerald-400">Tip 3:</strong> Download generates a JAR file ready for deployment.</p>
-                    <p><strong class="text-emerald-400">Tip 4:</strong> Use the Quick Create panel to add files and folders.</p>
-                </div>
+            <!-- Documentation -->
+            <div class="docs">
+                <div class="doc-title">📚 How To Use</div>
+                <div class="doc-item"><strong>1.</strong> Type plugin name above</div>
+                <div class="doc-item"><strong>2.</strong> Click folder in tree to select</div>
+                <div class="doc-item"><strong>3.</strong> Type filename, click Add File/Folder</div>
+                <div class="doc-item"><strong>4.</strong> Click file to edit in center</div>
+                <div class="doc-item"><strong>5.</strong> Right-click file to delete</div>
+                <div class="doc-item"><strong>6.</strong> Download JAR when done</div>
             </div>
         </div>
     </main>
 
     <script>
-        /**
-         * ============================================================================
-         * VISUAL MINECRAFT PLUGIN CREATOR STUDIO - Application Core (v3.0 - Rewrite)
-         * ============================================================================
-         * A comprehensive single-file web application for creating Minecraft plugins
-         * with visual file management and code editing capabilities.
-         * 
-         * VERSION 3.0 CHANGES:
-         * - Removed all modal dialogs and pop-ups
-         * - Added static in-line Quick Create panel with permanent input fields
-         * - Two simple buttons: [+] Add File and [+] Add Folder
-         * - Rock-solid path logic with comprehensive error handling
-         * - Try-catch blocks in all file/folder creation functions
-         * - User-facing error alerts and success messages
-         * - No hidden elements, just straightforward HTML
-         * 
-         * ARCHITECTURE:
-         * - Object-oriented design with clear separation of concerns
-         * - Explicit function naming for AI readability
-         * - Project structure stored in memory as tree data
-         * - JSZip for JAR export functionality
-         * ============================================================================
-         */
+        const game = {
+            // STATE
+            data: {},
+            selectedFile: null,
+            selectedFolder: "src/",
 
-        const app = {
-            // ========================================================================
-            // STATE MANAGEMENT
-            // ========================================================================
-            config: {
-                pluginName: 'MyAwesomePlugin',
-                jarName: 'MyAwesomePlugin-1.0.jar',
-                authorName: 'YourName',
-                minecraftVersion: '1.20',
-                javaVersion: '17',
-                crossVersionCompat: false
-            },
-
-            fileTree: {},
-            currentFile: null,
-            selectedFolder: 'src/',
-
-            // ========================================================================
-            // INITIALIZATION
-            // ========================================================================
-            /**
-             * Initialize the entire application
-             */
+            // INIT
             init() {
-                console.log('🚀 Initializing Visual Minecraft Plugin Creator Studio v3.0...');
-                this.createDefaultStructure();
-                this.renderFileTree();
-                this.updateBuildInfo();
+                console.log("🚀 STARTUP");
+                this.resetDefault();
+                this.render();
             },
 
-            // ========================================================================
-            // CONFIGURATION MANAGEMENT
-            // ========================================================================
-            /**
-             * Update configuration from form inputs
-             */
-            updateConfig() {
+            // CONFIG
+            onConfigChange() {
                 try {
-                    this.config.pluginName = document.getElementById('pluginName').value;
-                    this.config.jarName = document.getElementById('jarName').value;
-                    this.config.authorName = document.getElementById('authorName').value;
-                    this.config.minecraftVersion = document.getElementById('minecraftVersion').value;
-                    this.config.javaVersion = document.getElementById('javaVersion').value;
-                    this.config.crossVersionCompat = document.getElementById('crossVersionCompat').checked;
+                    const name = document.getElementById("cfgName").value || "MyPlugin";
+                    const jar = document.getElementById("cfgJar").value || "MyPlugin-1.0.jar";
+                    const author = document.getElementById("cfgAuthor").value || "Developer";
+                    const version = document.getElementById("cfgVersion").value;
 
-                    this.updatePluginYml();
-                    this.updateBuildInfo();
-                    console.log('✏️ Configuration updated:', this.config);
-                } catch (error) {
-                    console.error('❌ Error updating config:', error);
-                    this.showErrorBanner('Failed to update configuration');
-                }
-            },
+                    console.log(`✅ CONFIG: ${name} | ${jar}`);
 
-            /**
-             * Update plugin.yml file based on current configuration
-             */
-            updatePluginYml() {
-                try {
-                    const pluginYmlContent = `name: ${this.config.pluginName}
+                    // Update plugin.yml
+                    if (this.data["src/main/resources/plugin.yml"]) {
+                        this.data["src/main/resources/plugin.yml"].content = 
+`name: ${name}
 version: 1.0
-author: ${this.config.authorName}
-main: me.${this.config.authorName.toLowerCase()}.plugin.Main
-description: A wonderful Minecraft plugin
-api-version: '1.${this.config.minecraftVersion.split('.')[1] || '20}'
-
-# Commands
-commands:
-  hello:
-    description: Say hello to the player
-    usage: /hello
-    aliases: [hi, greet]
-
-# Permissions
-permissions:
-  myplugin.use:
-    description: Allows using the plugin
-    default: true
-  myplugin.admin:
-    description: Allows admin commands
-    default: op`;
-
-                    if (this.fileTree['src/main/resources/plugin.yml']) {
-                        this.fileTree['src/main/resources/plugin.yml'].content = pluginYmlContent;
+author: ${author}
+main: me.creator.plugin.Main
+description: A Minecraft plugin
+api-version: '${version}'`;
                     }
-                } catch (error) {
-                    console.error('❌ Error updating plugin.yml:', error);
+
+                    this.render();
+                } catch (e) {
+                    console.error("❌ CONFIG ERROR:", e);
                 }
             },
 
-            /**
-             * Update the build information display
-             */
-            updateBuildInfo() {
-                try {
-                    const fileCount = Object.keys(this.fileTree).filter(path => !path.endsWith('/')).length;
-                    const folderCount = Object.keys(this.fileTree).filter(path => path.endsWith('/')).length;
-
-                    document.getElementById('totalFiles').textContent = fileCount;
-                    document.getElementById('totalFolders').textContent = folderCount;
-                    document.getElementById('displayPluginName').textContent = this.config.pluginName;
-                    document.getElementById('displayJarName').textContent = this.config.jarName;
-                } catch (error) {
-                    console.error('❌ Error updating build info:', error);
+            handleEnter(e) {
+                if (e.key === "Enter") {
+                    this.createFile();
                 }
             },
 
-            // ========================================================================
-            // FILE TREE OPERATIONS WITH FAIL-SAFES
-            // ========================================================================
-            /**
-             * Create the default Spigot/Paper plugin structure
-             */
-            createDefaultStructure() {
+            // CREATE FILE
+            createFile() {
                 try {
-                    console.log('📦 Creating default Spigot plugin structure...');
-                    
-                    this.fileTree = {};
-                    this.selectedFolder = 'src/';
+                    const input = document.getElementById("quickInput");
+                    const name = input.value.trim();
 
-                    // Create folder structure
-                    this.createFolder('src/');
-                    this.createFolder('src/main/');
-                    this.createFolder('src/main/java/');
-                    this.createFolder('src/main/java/me/');
-                    this.createFolder('src/main/java/me/creator/');
-                    this.createFolder('src/main/java/me/creator/plugin/');
-                    this.createFolder('src/main/resources/');
+                    if (!name) {
+                        this.showStatus("❌ Empty name!", "error");
+                        return;
+                    }
 
-                    // Create Main.java file
-                    const mainJavaContent = `package me.creator.plugin;
+                    if (!name.includes(".")) {
+                        this.showStatus("❌ Add .ext (e.g. .java)", "error");
+                        return;
+                    }
 
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
+                    const path = this.selectedFolder + name;
+
+                    if (this.data[path]) {
+                        this.showStatus("❌ File exists!", "error");
+                        return;
+                    }
+
+                    this.data[path] = { type: "file", content: "// New file\n" };
+                    input.value = "";
+                    this.render();
+                    this.showStatus(`✅ Created: ${name}`, "success");
+                    console.log(`✅ FILE: ${path}`);
+                } catch (e) {
+                    console.error("❌ CREATE FILE ERROR:", e);
+                    this.showStatus(`❌ Error: ${e.message}`, "error");
+                }
+            },
+
+            // CREATE FOLDER
+            createFolder() {
+                try {
+                    const input = document.getElementById("quickInput");
+                    const name = input.value.trim();
+
+                    if (!name) {
+                        this.showStatus("❌ Empty name!", "error");
+                        return;
+                    }
+
+                    if (/[<>:"|?*\\]/.test(name)) {
+                        this.showStatus("❌ Invalid chars!", "error");
+                        return;
+                    }
+
+                    const path = this.selectedFolder + name + "/";
+
+                    if (this.data[path]) {
+                        this.showStatus("❌ Folder exists!", "error");
+                        return;
+                    }
+
+                    this.data[path] = { type: "folder" };
+                    input.value = "";
+                    this.render();
+                    this.showStatus(`✅ Created: ${name}/`, "success");
+                    console.log(`✅ FOLDER: ${path}`);
+                } catch (e) {
+                    console.error("❌ CREATE FOLDER ERROR:", e);
+                    this.showStatus(`❌ Error: ${e.message}`, "error");
+                }
+            },
+
+            showStatus(msg, type) {
+                const el = document.getElementById("quickStatus");
+                el.textContent = msg;
+                el.className = `status-message show status-${type}`;
+                setTimeout(() => el.classList.remove("show"), 3000);
+            },
+
+            // SELECT FILE/FOLDER
+            selectItem(path) {
+                const item = this.data[path];
+                if (item.type === "folder") {
+                    this.selectedFolder = path;
+                    this.selectedFile = null;
+                } else {
+                    this.selectedFile = path;
+                }
+                this.render();
+            },
+
+            // SAVE CODE
+            saveCode() {
+                if (this.selectedFile && this.data[this.selectedFile]) {
+                    this.data[this.selectedFile].content = document.getElementById("codeEditor").value;
+                }
+            },
+
+            // DELETE FILE
+            deleteFile() {
+                if (!this.selectedFile) return;
+                if (!confirm(`Delete ${this.selectedFile}?`)) return;
+
+                try {
+                    delete this.data[this.selectedFile];
+                    this.selectedFile = null;
+                    this.render();
+                    this.showStatus("✅ Deleted", "success");
+                } catch (e) {
+                    this.showStatus("❌ Delete error", "error");
+                }
+            },
+
+            // RESET DEFAULT
+            resetDefault() {
+                if (this.data["src/"]) {
+                    if (!confirm("Reset to default structure?")) return;
+                }
+
+                try {
+                    this.data = {
+                        "src/": { type: "folder" },
+                        "src/main/": { type: "folder" },
+                        "src/main/java/": { type: "folder" },
+                        "src/main/java/me/": { type: "folder" },
+                        "src/main/java/me/creator/": { type: "folder" },
+                        "src/main/java/me/creator/plugin/": { type: "folder" },
+                        "src/main/resources/": { type: "folder" },
+                        "src/main/java/me/creator/plugin/Main.java": {
+                            type: "file",
+                            content: `package me.creator.plugin;
+
 import org.bukkit.plugin.java.JavaPlugin;
 
-/**
- * Main plugin class for ${this.config.pluginName}
- * Extends JavaPlugin to provide plugin functionality
- */
-public class Main extends JavaPlugin implements Listener {
-
+public class Main extends JavaPlugin {
     @Override
     public void onEnable() {
-        getLogger().info("✅ ${this.config.pluginName} has been enabled!");
-        getServer().getPluginManager().registerEvents(this, this);
+        getLogger().info("✅ Plugin enabled!");
     }
 
     @Override
     public void onDisable() {
-        getLogger().info("❌ ${this.config.pluginName} has been disabled!");
+        getLogger().info("❌ Plugin disabled!");
     }
-
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        player.sendMessage("§a§lWelcome to ${this.config.pluginName}!");
-    }
-}`;
-
-                    this.createFile('src/main/java/me/creator/plugin/Main.java', mainJavaContent);
-
-                    // Create plugin.yml
-                    const pluginYmlContent = `name: ${this.config.pluginName}
+}`
+                        },
+                        "src/main/resources/plugin.yml": {
+                            type: "file",
+                            content: `name: MyPlugin
 version: 1.0
-author: ${this.config.authorName}
+author: Developer
 main: me.creator.plugin.Main
-description: A wonderful Minecraft plugin
-api-version: '1.20'
-
-commands:
-  hello:
-    description: Say hello to the player
-    usage: /hello
-    aliases: [hi, greet]
-
-permissions:
-  myplugin.use:
-    description: Allows using the plugin
-    default: true
-  myplugin.admin:
-    description: Allows admin commands
-    default: op`;
-
-                    this.createFile('src/main/resources/plugin.yml', pluginYmlContent);
-
-                    // Create config.yml
-                    const configYmlContent = `# ${this.config.pluginName} Configuration File
-
-# General Settings
-general:
-  enabled: true
-  debug: false
-  prefix: "&7[&a${this.config.pluginName}&7]"
-
-# Database Settings
-database:
-  enabled: false
-  type: "mysql"
-  host: "localhost"
-  port: 3306
-  name: "minecraft_db"
-  user: "root"
-  password: ""
-
-# Feature Toggles
-features:
-  joinMessage: true
-  commandSystem: true
-  eventListeners: true`;
-
-                    this.createFile('src/main/resources/config.yml', configYmlContent);
-
-                    // Create README
-                    const readmeContent = `# ${this.config.pluginName}
-
-A custom Minecraft plugin created with Visual Plugin Creator Studio.
-
-## Features
-- Modern plugin architecture
-- Event-driven design
-- Configurable settings
-
-## Installation
-1. Place the JAR file in your server's plugins folder
-2. Restart the server
-3. Customize the config.yml as needed
-
-## Author
-Created by: ${this.config.authorName}`;
-
-                    this.createFile('README.md', readmeContent);
-
-                    this.renderFileTree();
-                    this.updateBuildInfo();
-                    console.log('✅ Default structure created successfully');
-                } catch (error) {
-                    console.error('❌ Fatal error in createDefaultStructure:', error);
-                    alert('ERROR: Failed to create default structure. Check browser console.');
-                }
-            },
-
-            /**
-             * Create a new folder with comprehensive error handling
-             * @param {string} folderPath - Full path to the folder
-             */
-            createFolder(folderPath) {
-                try {
-                    // Validate input
-                    if (!folderPath || typeof folderPath !== 'string') {
-                        throw new Error('Folder path must be a non-empty string');
-                    }
-
-                    // Ensure trailing slash
-                    if (!folderPath.endsWith('/')) {
-                        folderPath += '/';
-                    }
-
-                    // Check if already exists
-                    if (this.fileTree[folderPath]) {
-                        throw new Error(`Folder already exists: ${folderPath}`);
-                    }
-
-                    // Create folder
-                    this.fileTree[folderPath] = {
-                        type: 'folder',
-                        children: []
+description: A Minecraft plugin
+api-version: '1.20'`
+                        }
                     };
 
-                    console.log(`✅ Folder created: ${folderPath}`);
-                    return true;
-                } catch (error) {
-                    console.error(`❌ Error in createFolder('${folderPath}'):`, error.message);
-                    throw error;
+                    this.selectedFile = null;
+                    this.selectedFolder = "src/";
+                    this.render();
+                    this.showStatus("✅ Reset to default", "success");
+                    console.log("✅ DEFAULT RESET");
+                } catch (e) {
+                    console.error("❌ RESET ERROR:", e);
                 }
             },
 
-            /**
-             * Create a new file with comprehensive error handling
-             * @param {string} filePath - Full path to the file
-             * @param {string} content - Initial content
-             */
-            createFile(filePath, content = '') {
+            // CLEAR ALL
+            clearAll() {
+                if (!confirm("⚠️ DELETE EVERYTHING?")) return;
+
                 try {
-                    // Validate input
-                    if (!filePath || typeof filePath !== 'string') {
-                        throw new Error('File path must be a non-empty string');
-                    }
-
-                    if (typeof content !== 'string') {
-                        content = '';
-                    }
-
-                    // Check if already exists
-                    if (this.fileTree[filePath]) {
-                        throw new Error(`File already exists: ${filePath}`);
-                    }
-
-                    // Create file
-                    this.fileTree[filePath] = {
-                        type: 'file',
-                        content: content
-                    };
-
-                    console.log(`✅ File created: ${filePath}`);
-                    return true;
-                } catch (error) {
-                    console.error(`❌ Error in createFile('${filePath}'):`, error.message);
-                    throw error;
+                    this.data = {};
+                    this.selectedFile = null;
+                    this.render();
+                    this.showStatus("✅ Cleared", "success");
+                } catch (e) {
+                    this.showStatus("❌ Clear error", "error");
                 }
             },
 
-            /**
-             * Delete a file or folder from the tree
-             * @param {string} path - Path to delete
-             */
-            deleteItem(path) {
+            // EXPORT JSON
+            exportJSON() {
                 try {
-                    if (!this.fileTree[path]) {
-                        throw new Error(`Path does not exist: ${path}`);
-                    }
+                    const json = JSON.stringify({
+                        config: {
+                            name: document.getElementById("cfgName").value,
+                            jar: document.getElementById("cfgJar").value,
+                            author: document.getElementById("cfgAuthor").value
+                        },
+                        files: this.data
+                    }, null, 2);
 
-                    delete this.fileTree[path];
-                    if (this.currentFile === path) {
-                        this.currentFile = null;
-                        this.displayFile(null);
-                    }
-                    this.renderFileTree();
-                    this.updateBuildInfo();
-                    console.log(`✅ Deleted: ${path}`);
-                } catch (error) {
-                    console.error(`❌ Error in deleteItem:`, error.message);
-                    this.showErrorBanner(error.message);
+                    const blob = new Blob([json], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "project.json";
+                    a.click();
+                    URL.revokeObjectURL(url);
+
+                    this.showStatus("✅ Exported", "success");
+                } catch (e) {
+                    this.showStatus("❌ Export error", "error");
                 }
             },
 
-            /**
-             * Rename a file or folder
-             */
-            renameItem(oldPath, newPath) {
-                try {
-                    if (!this.fileTree[oldPath]) {
-                        throw new Error(`Source path does not exist: ${oldPath}`);
-                    }
-
-                    if (this.fileTree[newPath]) {
-                        throw new Error(`Destination path already exists: ${newPath}`);
-                    }
-
-                    this.fileTree[newPath] = this.fileTree[oldPath];
-                    delete this.fileTree[oldPath];
-                    
-                    if (this.currentFile === oldPath) {
-                        this.currentFile = newPath;
-                        this.displayFile(newPath);
-                    }
-                    
-                    this.renderFileTree();
-                    this.updateBuildInfo();
-                    console.log(`✅ Renamed: ${oldPath} → ${newPath}`);
-                } catch (error) {
-                    console.error(`❌ Error in renameItem:`, error.message);
-                    this.showErrorBanner(error.message);
-                }
-            },
-
-            /**
-             * Get children of a folder
-             */
-            getChildrenOfFolder(parentPath) {
-                try {
-                    if (!parentPath.endsWith('/')) {
-                        parentPath += '/';
-                    }
-
-                    return Object.keys(this.fileTree).filter(path => {
-                        return path.startsWith(parentPath) && path !== parentPath;
-                    }).filter(path => {
-                        const relative = path.substring(parentPath.length);
-                        return !relative.includes('/') || relative.endsWith('/');
-                    });
-                } catch (error) {
-                    console.error('❌ Error in getChildrenOfFolder:', error.message);
-                    return [];
-                }
-            },
-
-            // ========================================================================
-            // QUICK CREATE INTERFACE (NEW v3.0)
-            // ========================================================================
-            /**
-             * Handle Enter key in quick create input
-             */
-            handleQuickCreateKeypress(event) {
-                if (event.key === 'Enter') {
-                    if (event.shiftKey) {
-                        this.quickCreateFolder();
-                    } else {
-                        this.quickCreateFile();
-                    }
-                }
-            },
-
-            /**
-             * Quick create a file from the input field
-             */
-            quickCreateFile() {
-                try {
-                    const input = document.getElementById('quickCreateInput');
-                    const itemName = input.value.trim();
-
-                    // Validate
-                    if (!itemName) {
-                        this.showErrorBanner('❌ File name cannot be empty');
-                        return;
-                    }
-
-                    // Check for extension
-                    if (!itemName.includes('.')) {
-                        this.showErrorBanner('❌ File must have an extension (e.g., .java, .yml)');
-                        return;
-                    }
-
-                    // Check for illegal characters
-                    if (/[<>:"|?*\\]/.test(itemName)) {
-                        this.showErrorBanner('❌ File name contains illegal characters');
-                        return;
-                    }
-
-                    // Build full path
-                    const fullPath = this.selectedFolder + itemName;
-
-                    // Check if exists
-                    if (this.fileTree[fullPath]) {
-                        this.showErrorBanner(`❌ File already exists: ${fullPath}`);
-                        return;
-                    }
-
-                    // Create file
-                    this.createFile(fullPath, '// New file\n');
-                    
-                    // Clear input
-                    input.value = '';
-                    
-                    // Refresh UI
-                    this.renderFileTree();
-                    this.updateBuildInfo();
-                    
-                    // Show success
-                    this.showSuccessBanner(`✅ File created: ${itemName}`);
-                    console.log(`✅ File created: ${fullPath}`);
-
-                } catch (error) {
-                    console.error('❌ Error in quickCreateFile:', error);
-                    this.showErrorBanner(`❌ ERROR: ${error.message}`);
-                }
-            },
-
-            /**
-             * Quick create a folder from the input field
-             */
-            quickCreateFolder() {
-                try {
-                    const input = document.getElementById('quickCreateInput');
-                    const itemName = input.value.trim();
-
-                    // Validate
-                    if (!itemName) {
-                        this.showErrorBanner('❌ Folder name cannot be empty');
-                        return;
-                    }
-
-                    // Check for illegal characters
-                    if (/[<>:"|?*\\/.]/test(itemName)) {
-                        this.showErrorBanner('❌ Folder name contains illegal characters');
-                        return;
-                    }
-
-                    // Build full path (auto-append slash)
-                    const fullPath = this.selectedFolder + itemName + '/';
-
-                    // Check if exists
-                    if (this.fileTree[fullPath]) {
-                        this.showErrorBanner(`❌ Folder already exists: ${fullPath}`);
-                        return;
-                    }
-
-                    // Create folder
-                    this.createFolder(fullPath);
-                    
-                    // Clear input
-                    input.value = '';
-                    
-                    // Refresh UI
-                    this.renderFileTree();
-                    this.updateBuildInfo();
-                    
-                    // Show success
-                    this.showSuccessBanner(`✅ Folder created: ${itemName}/`);
-                    console.log(`✅ Folder created: ${fullPath}`);
-
-                } catch (error) {
-                    console.error('❌ Error in quickCreateFolder:', error);
-                    this.showErrorBanner(`❌ ERROR: ${error.message}`);
-                }
-            },
-
-            /**
-             * Show error banner
-             */
-            showErrorBanner(message) {
-                const banner = document.getElementById('quickCreateError');
-                banner.textContent = message;
-                banner.style.display = 'block';
-                setTimeout(() => {
-                    banner.style.display = 'none';
-                }, 4000);
-            },
-
-            /**
-             * Show success banner
-             */
-            showSuccessBanner(message) {
-                const banner = document.getElementById('quickCreateSuccess');
-                banner.textContent = message;
-                banner.style.display = 'block';
-                setTimeout(() => {
-                    banner.style.display = 'none';
-                }, 3000);
-            },
-
-            // ========================================================================
-            // FILE DISPLAY & EDITING
-            // ========================================================================
-            /**
-             * Display a file's content in the code editor
-             */
-            displayFile(filePath) {
-                try {
-                    const editor = document.getElementById('codeEditor');
-                    const title = document.getElementById('editorTitle');
-                    const deleteBtn = document.getElementById('deleteFileBtn');
-
-                    if (!filePath || !this.fileTree[filePath]) {
-                        editor.value = '';
-                        title.textContent = '📄 Select a file to edit';
-                        deleteBtn.style.display = 'none';
-                        editor.disabled = true;
-                        return;
-                    }
-
-                    const file = this.fileTree[filePath];
-                    if (file.type === 'file') {
-                        editor.value = file.content || '';
-                        title.textContent = `📄 ${filePath}`;
-                        deleteBtn.style.display = 'inline-block';
-                        editor.disabled = false;
-                        this.currentFile = filePath;
-                    } else {
-                        editor.value = '';
-                        title.textContent = '📁 This is a folder, not a file';
-                        deleteBtn.style.display = 'none';
-                        editor.disabled = true;
-                    }
-                } catch (error) {
-                    console.error('❌ Error in displayFile:', error);
-                }
-            },
-
-            /**
-             * Save the current file's content
-             */
-            saveCurrentFile() {
-                try {
-                    if (this.currentFile && this.fileTree[this.currentFile]) {
-                        const editor = document.getElementById('codeEditor');
-                        this.fileTree[this.currentFile].content = editor.value;
-                    }
-                } catch (error) {
-                    console.error('❌ Error in saveCurrentFile:', error);
-                }
-            },
-
-            /**
-             * Delete the currently displayed file
-             */
-            deleteCurrentFile() {
-                try {
-                    if (this.currentFile) {
-                        if (confirm(`Are you sure you want to delete "${this.currentFile}"?`)) {
-                            this.deleteItem(this.currentFile);
-                        }
-                    }
-                } catch (error) {
-                    console.error('❌ Error in deleteCurrentFile:', error);
-                }
-            },
-
-            // ========================================================================
-            // FILE TREE RENDERING
-            // ========================================================================
-            /**
-             * Render the entire file tree in the UI
-             */
-            renderFileTree() {
-                try {
-                    const container = document.getElementById('fileTree');
-                    container.innerHTML = '';
-
-                    // Sort and display root-level items
-                    const rootItems = Object.keys(this.fileTree)
-                        .filter(path => !path.includes('/') || path.split('/').length === 2)
-                        .sort();
-
-                    rootItems.forEach(path => {
-                        const item = this.fileTree[path];
-                        container.appendChild(this.createTreeItemElement(path, item, 0));
-                    });
-                } catch (error) {
-                    console.error('❌ Error in renderFileTree:', error);
-                }
-            },
-
-            /**
-             * Create a tree item HTML element
-             */
-            createTreeItemElement(path, item, depth = 0) {
-                try {
-                    const element = document.createElement('div');
-                    const isFolder = item.type === 'folder';
-                    const isSelected = this.currentFile === path || this.selectedFolder === path;
-
-                    const indent = depth * 1.25;
-                    element.style.paddingLeft = `${indent}rem`;
-                    element.className = `tree-item ${isSelected ? 'selected' : ''} ${isFolder ? 'folder-item' : 'file-item'}`;
-
-                    // Icon
-                    const iconSpan = document.createElement('span');
-                    iconSpan.className = 'tree-item-icon';
-                    iconSpan.textContent = isFolder ? '▶' : '📄';
-
-                    // Label
-                    const labelSpan = document.createElement('span');
-                    const displayName = path.split('/').filter(Boolean).pop();
-                    labelSpan.textContent = displayName;
-
-                    element.appendChild(iconSpan);
-                    element.appendChild(labelSpan);
-
-                    // Click handler
-                    element.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        if (isFolder) {
-                            element.classList.toggle('collapsed');
-                            this.selectedFolder = path;
-                            this.renderFileTree();
-                        } else {
-                            this.displayFile(path);
-                            this.renderFileTree();
-                        }
-                    });
-
-                    // Right-click context menu
-                    element.addEventListener('contextmenu', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        this.showContextMenu(path, e.clientX, e.clientY);
-                    });
-
-                    // Render children if folder
-                    if (isFolder) {
-                        const children = this.getChildrenOfFolder(path);
-                        children.forEach(childPath => {
-                            const childItem = this.fileTree[childPath];
-                            const childElement = this.createTreeItemElement(childPath, childItem, depth + 1);
-                            element.appendChild(childElement);
-                        });
-                    }
-
-                    return element;
-                } catch (error) {
-                    console.error('❌ Error in createTreeItemElement:', error);
-                    return document.createElement('div');
-                }
-            },
-
-            /**
-             * Show context menu for file/folder operations
-             */
-            showContextMenu(itemPath, x, y) {
-                try {
-                    const menu = document.createElement('div');
-                    menu.style.cssText = `
-                        position: fixed;
-                        top: ${y}px;
-                        left: ${x}px;
-                        background: #1e293b;
-                        border: 1px solid #334155;
-                        border-radius: 0.5rem;
-                        z-index: 1000;
-                        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-                    `;
-
-                    const actions = [
-                        {
-                            label: 'Delete',
-                            action: () => {
-                                if (confirm(`Delete "${itemPath}"?`)) {
-                                    this.deleteItem(itemPath);
-                                }
-                            },
-                            danger: true
-                        }
-                    ];
-
-                    actions.forEach(action => {
-                        const button = document.createElement('button');
-                        button.textContent = action.label;
-                        button.style.cssText = `
-                            display: block;
-                            width: 100%;
-                            padding: 0.5rem 1rem;
-                            text-align: left;
-                            border: none;
-                            background: transparent;
-                            color: ${action.danger ? '#f87171' : '#e2e8f0'};
-                            cursor: pointer;
-                            font-size: 0.875rem;
-                            transition: background 0.2s;
-                        `;
-                        button.onmouseover = () => button.style.background = 'rgba(79, 172, 254, 0.1)';
-                        button.onmouseout = () => button.style.background = 'transparent';
-                        button.onclick = () => {
-                            action.action();
-                            menu.remove();
-                        };
-                        menu.appendChild(button);
-                    });
-
-                    document.body.appendChild(menu);
-                    setTimeout(() => {
-                        document.addEventListener('click', () => menu.remove(), { once: true });
-                    }, 100);
-                } catch (error) {
-                    console.error('❌ Error in showContextMenu:', error);
-                }
-            },
-
-            // ========================================================================
-            // EXPORT & BUILD SYSTEM
-            // ========================================================================
-            /**
-             * Generate and download a JAR file
-             */
+            // DOWNLOAD JAR
             async downloadJAR() {
                 try {
-                    console.log('📦 Generating JAR file...');
-
+                    console.log("📦 JAR GENERATION");
                     const zip = new JSZip();
 
-                    // Add all files to the ZIP
-                    Object.keys(this.fileTree).forEach(path => {
-                        const item = this.fileTree[path];
-                        if (item.type === 'file') {
-                            zip.file(path, item.content);
+                    // Add all files
+                    for (const [path, item] of Object.entries(this.data)) {
+                        if (item.type === "file") {
+                            zip.file(path, item.content || "");
                         }
-                    });
-
-                    // Add META-INF/MANIFEST.MF
-                    const manifest = `Manifest-Version: 1.0
-Created-By: Visual Plugin Creator Studio
-Main-Class: me.creator.plugin.Main
-Implementation-Title: ${this.config.pluginName}
-Implementation-Version: 1.0
-Implementation-Vendor: ${this.config.authorName}
-Specification-Title: ${this.config.pluginName}
-Specification-Version: 1.0
-Specification-Vendor: ${this.config.authorName}
-`;
-                    zip.folder('META-INF').file('MANIFEST.MF', manifest);
-
-                    // Generate the ZIP as a blob
-                    const blob = await zip.generateAsync({ type: 'blob' });
-
-                    // Trigger download
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = this.config.jarName;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
-
-                    console.log('✅ JAR file downloaded successfully!');
-                    alert('✅ JAR file downloaded: ' + this.config.jarName);
-                } catch (error) {
-                    console.error('❌ Error generating JAR:', error);
-                    alert('❌ ERROR: Failed to generate JAR file. Check console for details.');
-                }
-            },
-
-            /**
-             * Export the entire project as a JSON file
-             */
-            exportAsJSON() {
-                try {
-                    const projectData = {
-                        config: this.config,
-                        files: this.fileTree,
-                        exportedAt: new Date().toISOString()
-                    };
-
-                    const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `${this.config.pluginName}-export.json`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
-
-                    console.log('✅ Project exported as JSON');
-                    alert('✅ Project exported as JSON');
-                } catch (error) {
-                    console.error('❌ Error exporting project:', error);
-                    alert('❌ ERROR: Failed to export project. Check console for details.');
-                }
-            },
-
-            /**
-             * Clear all files and folders (factory reset)
-             */
-            clearAllFiles() {
-                try {
-                    if (confirm('🚨 This will delete all files and folders. Are you sure?')) {
-                        this.fileTree = {};
-                        this.currentFile = null;
-                        this.selectedFolder = 'src/';
-                        this.displayFile(null);
-                        this.renderFileTree();
-                        this.updateBuildInfo();
-                        console.log('🗑️ All files cleared');
                     }
-                } catch (error) {
-                    console.error('❌ Error clearing files:', error);
-                    alert('❌ ERROR: Failed to clear files. Check console.');
+
+                    // Add manifest
+                    const manifest = `Manifest-Version: 1.0
+Main-Class: me.creator.plugin.Main
+Created-By: Plugin Studio`;
+                    zip.folder("META-INF").file("MANIFEST.MF", manifest);
+
+                    const blob = await zip.generateAsync({ type: "blob" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = document.getElementById("cfgJar").value;
+                    a.click();
+                    URL.revokeObjectURL(url);
+
+                    this.showStatus("✅ Downloaded", "success");
+                    console.log("✅ JAR DOWNLOADED");
+                } catch (e) {
+                    console.error("❌ JAR ERROR:", e);
+                    this.showStatus("❌ JAR error", "error");
                 }
+            },
+
+            // RENDER UI
+            render() {
+                try {
+                    // Render file tree
+                    const tree = document.getElementById("fileTree");
+                    tree.innerHTML = "";
+
+                    const items = Object.keys(this.data).sort();
+                    for (const path of items) {
+                        if (!path.includes("/") || path.split("/").length <= 2) {
+                            tree.appendChild(this.createTreeElement(path, 0));
+                        }
+                    }
+
+                    // Render editor
+                    const editor = document.getElementById("codeEditor");
+                    const title = document.getElementById("editorTitle");
+                    const deleteBtn = document.getElementById("btnDeleteFile");
+
+                    if (this.selectedFile && this.data[this.selectedFile]) {
+                        editor.value = this.data[this.selectedFile].content || "";
+                        title.textContent = `📄 ${this.selectedFile}`;
+                        deleteBtn.style.display = "inline-block";
+                        editor.disabled = false;
+                    } else {
+                        editor.value = "";
+                        title.textContent = "👉 Click a file to edit";
+                        deleteBtn.style.display = "none";
+                        editor.disabled = true;
+                    }
+
+                    // Update stats
+                    const files = Object.keys(this.data).filter(p => !p.endsWith("/")).length;
+                    const folders = Object.keys(this.data).filter(p => p.endsWith("/")).length;
+                    document.getElementById("statFiles").textContent = files;
+                    document.getElementById("statFolders").textContent = folders;
+                    document.getElementById("statName").textContent = document.getElementById("cfgName").value;
+                    document.getElementById("statJar").textContent = document.getElementById("cfgJar").value;
+
+                    console.log(`📊 RENDER: ${files} files, ${folders} folders`);
+                } catch (e) {
+                    console.error("❌ RENDER ERROR:", e);
+                }
+            },
+
+            // CREATE TREE ELEMENT
+            createTreeElement(path, depth) {
+                const item = this.data[path];
+                const isFolder = item.type === "folder";
+                const isSelected = (isFolder && this.selectedFolder === path) || this.selectedFile === path;
+                const name = path.split("/").filter(Boolean).pop();
+
+                const el = document.createElement("div");
+                el.className = `tree-item ${isSelected ? "selected" : ""}`;
+                el.style.paddingLeft = (depth * 15 + 10) + "px";
+                el.textContent = (isFolder ? "📁 " : "📄 ") + name;
+
+                el.onclick = () => this.selectItem(path);
+                el.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    if (confirm(`Delete ${path}?`)) {
+                        delete this.data[path];
+                        if (this.selectedFile === path) this.selectedFile = null;
+                        this.render();
+                    }
+                };
+
+                // Add children
+                if (isFolder) {
+                    const children = Object.keys(this.data)
+                        .filter(p => p.startsWith(path) && p !== path)
+                        .filter(p => {
+                            const rel = p.substring(path.length);
+                            return rel.split("/").length <= 2;
+                        })
+                        .sort();
+
+                    for (const child of children) {
+                        const childEl = this.createTreeElement(child, depth + 1);
+                        el.appendChild(childEl);
+                    }
+                }
+
+                return el;
             }
         };
 
-        /**
-         * Initialize application when DOM is ready
-         */
-        document.addEventListener('DOMContentLoaded', () => {
-            app.init();
-        });
+        // START APP
+        document.addEventListener("DOMContentLoaded", () => game.init());
     </script>
 </body>
 </html>
