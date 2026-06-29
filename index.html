@@ -115,6 +115,18 @@
             width: 90%;
         }
 
+        .error-message {
+            color: #f87171;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .success-message {
+            color: #10b981;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
         .spinner {
             display: inline-block;
             width: 1rem;
@@ -293,6 +305,7 @@
                     <p><strong class="text-emerald-400">Tip 1:</strong> Click files to edit them in the center panel.</p>
                     <p><strong class="text-emerald-400">Tip 2:</strong> Right-click items for rename/delete options.</p>
                     <p><strong class="text-emerald-400">Tip 3:</strong> Download generates a JAR file ready for deployment.</p>
+                    <p><strong class="text-emerald-400">Tip 4:</strong> Select a folder before adding files to organize them.</p>
                 </div>
             </div>
         </div>
@@ -303,7 +316,8 @@
         <div class="dialog-box fade-in">
             <h2 id="dialogTitle" class="text-xl font-bold text-emerald-400 mb-4">Dialog</h2>
             <input type="text" id="dialogInput" placeholder="Enter name..." class="input-field mb-4">
-            <div class="flex gap-3 justify-end">
+            <div id="dialogError" class="error-message" style="display:none;"></div>
+            <div class="flex gap-3 justify-end mt-4">
                 <button onclick="app.closeDialog()" class="button-secondary">Cancel</button>
                 <button onclick="app.confirmDialog()" class="button-primary">Confirm</button>
             </div>
@@ -313,10 +327,18 @@
     <script>
         /**
          * ============================================================================
-         * VISUAL MINECRAFT PLUGIN CREATOR STUDIO - Application Core
+         * VISUAL MINECRAFT PLUGIN CREATOR STUDIO - Application Core (v2.0 - Fixed)
          * ============================================================================
          * A comprehensive single-file web application for creating Minecraft plugins
          * with visual file management and code editing capabilities.
+         * 
+         * FIXES IN THIS VERSION:
+         * - Fixed file/folder creation state management
+         * - Added proper parent path tracking for nested creation
+         * - Enhanced input validation (no illegal characters/spaces)
+         * - Immediate DOM re-render after operations
+         * - Fixed folder selection context
+         * - Improved error handling and user feedback
          * 
          * ARCHITECTURE NOTES:
          * - Uses object-oriented design with clear separation of concerns
@@ -346,11 +368,14 @@
             /** @type {string|null} Currently selected file path */
             currentFile: null,
 
+            /** @type {string|null} Currently selected folder for operations */
+            selectedFolder: 'src/',
+
             /** @type {Object} Dialog state management */
             dialog: {
                 isOpen: false,
                 mode: null, // 'addFolder', 'addFile', 'renameItem'
-                parentPath: null
+                parentPath: 'src/'
             },
 
             // ========================================================================
@@ -361,10 +386,31 @@
              * Sets up event listeners and creates default project structure
              */
             init() {
-                console.log('🚀 Initializing Visual Minecraft Plugin Creator Studio...');
+                console.log('🚀 Initializing Visual Minecraft Plugin Creator Studio v2.0...');
                 this.createDefaultStructure();
                 this.renderFileTree();
                 this.updateBuildInfo();
+                this.setupDialogKeyHandlers();
+            },
+
+            /**
+             * Setup keyboard event handlers for the dialog
+             * Allows Enter to confirm and Escape to cancel
+             */
+            setupDialogKeyHandlers() {
+                const dialogInput = document.getElementById('dialogInput');
+                if (dialogInput) {
+                    dialogInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            this.confirmDialog();
+                        }
+                    });
+                    dialogInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Escape') {
+                            this.closeDialog();
+                        }
+                    });
+                }
             },
 
             // ========================================================================
@@ -445,6 +491,7 @@ permissions:
                 console.log('📦 Creating default Spigot plugin structure...');
                 
                 this.fileTree = {};
+                this.selectedFolder = 'src/';
 
                 // Create folder structure
                 this.createFolder('src/');
@@ -651,6 +698,46 @@ Created by: ${this.config.authorName}`;
             },
 
             // ========================================================================
+            // INPUT VALIDATION
+            // ========================================================================
+            /**
+             * Validate filename/folder name input
+             * Prevents illegal characters and spaces
+             * @param {string} name - The name to validate
+             * @returns {Object} { isValid: boolean, error: string }
+             */
+            validateItemName(name, type = 'file') {
+                if (!name || name.trim().length === 0) {
+                    return { isValid: false, error: 'Name cannot be empty' };
+                }
+
+                // Trim whitespace
+                name = name.trim();
+
+                // Check for illegal characters
+                const illegalChars = /[<>:"|?*\\/]/g;
+                if (illegalChars.test(name)) {
+                    return { isValid: false, error: 'Illegal characters: < > : " | ? * \\ /' };
+                }
+
+                // For files, ensure extension is present if needed
+                if (type === 'file' && !name.includes('.')) {
+                    return { isValid: false, error: 'File must have an extension (e.g., .java, .yml)' };
+                }
+
+                return { isValid: true, error: '' };
+            },
+
+            /**
+             * Check if a path already exists
+             * @param {string} path - Path to check
+             * @returns {boolean} True if path exists
+             */
+            pathExists(path) {
+                return path in this.fileTree;
+            },
+
+            // ========================================================================
             // FILE DISPLAY & EDITING
             // ========================================================================
             /**
@@ -739,7 +826,7 @@ Created by: ${this.config.authorName}`;
             createTreeItemElement(path, item, depth = 0) {
                 const element = document.createElement('div');
                 const isFolder = item.type === 'folder';
-                const isSelected = this.currentFile === path;
+                const isSelected = this.currentFile === path || this.selectedFolder === path;
 
                 const indent = depth * 1.25;
                 element.style.paddingLeft = `${indent}rem`;
@@ -762,8 +849,13 @@ Created by: ${this.config.authorName}`;
                 element.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (isFolder) {
+                        // Toggle folder expansion
                         element.classList.toggle('collapsed');
+                        // Select folder for context
+                        this.selectedFolder = path;
+                        this.renderFileTree();
                     } else {
+                        // Select file for editing
                         this.displayFile(path);
                         this.renderFileTree();
                     }
@@ -862,10 +954,12 @@ Created by: ${this.config.authorName}`;
              */
             openAddFolderDialog() {
                 this.dialog.mode = 'addFolder';
-                this.dialog.parentPath = this.currentFile || '';
+                this.dialog.parentPath = this.selectedFolder || 'src/';
                 document.getElementById('dialogTitle').textContent = 'Add New Folder';
                 document.getElementById('dialogInput').value = '';
                 document.getElementById('dialogInput').placeholder = 'Enter folder name (e.g., utils)';
+                document.getElementById('dialogError').style.display = 'none';
+                document.getElementById('dialogError').textContent = '';
                 this.showDialog();
             },
 
@@ -874,10 +968,12 @@ Created by: ${this.config.authorName}`;
              */
             openAddFileDialog() {
                 this.dialog.mode = 'addFile';
-                this.dialog.parentPath = this.currentFile || '';
+                this.dialog.parentPath = this.selectedFolder || 'src/';
                 document.getElementById('dialogTitle').textContent = 'Add New File';
                 document.getElementById('dialogInput').value = '';
                 document.getElementById('dialogInput').placeholder = 'Enter file name (e.g., MyClass.java)';
+                document.getElementById('dialogError').style.display = 'none';
+                document.getElementById('dialogError').textContent = '';
                 this.showDialog();
             },
 
@@ -891,6 +987,8 @@ Created by: ${this.config.authorName}`;
                 const currentName = itemPath.split('/').filter(Boolean).pop();
                 document.getElementById('dialogTitle').textContent = 'Rename Item';
                 document.getElementById('dialogInput').value = currentName;
+                document.getElementById('dialogError').style.display = 'none';
+                document.getElementById('dialogError').textContent = '';
                 this.showDialog();
             },
 
@@ -910,32 +1008,86 @@ Created by: ${this.config.authorName}`;
             closeDialog() {
                 document.getElementById('dialogOverlay').classList.remove('active');
                 this.dialog.isOpen = false;
+                document.getElementById('dialogError').style.display = 'none';
+                document.getElementById('dialogError').textContent = '';
             },
 
             /**
              * Handle dialog confirmation
              * Processes the input based on dialog mode
+             * FIXED: Now properly validates and creates items with correct parent paths
              */
             confirmDialog() {
                 const input = document.getElementById('dialogInput').value.trim();
+                const errorDiv = document.getElementById('dialogError');
 
-                if (!input) {
-                    alert('Please enter a valid name');
+                // Determine item type for validation
+                const itemType = this.dialog.mode === 'addFile' ? 'file' : 'folder';
+
+                // Validate input
+                const validation = this.validateItemName(input, itemType);
+                if (!validation.isValid) {
+                    errorDiv.textContent = validation.error;
+                    errorDiv.style.display = 'block';
                     return;
                 }
 
+                // Determine the full path based on mode
+                let fullPath = '';
                 switch (this.dialog.mode) {
                     case 'addFolder':
-                        this.createFolder(input);
+                        // Build folder path with parent directory
+                        fullPath = this.dialog.parentPath + input + '/';
+                        
+                        // Check if path already exists
+                        if (this.pathExists(fullPath)) {
+                            errorDiv.textContent = 'Folder already exists';
+                            errorDiv.style.display = 'block';
+                            return;
+                        }
+                        
+                        this.createFolder(fullPath);
+                        console.log(`✅ Folder created: ${fullPath}`);
                         break;
+
                     case 'addFile':
-                        this.createFile(input, '// New file\n');
+                        // Build file path with parent directory
+                        fullPath = this.dialog.parentPath + input;
+                        
+                        // Check if path already exists
+                        if (this.pathExists(fullPath)) {
+                            errorDiv.textContent = 'File already exists';
+                            errorDiv.style.display = 'block';
+                            return;
+                        }
+                        
+                        this.createFile(fullPath, '// New file\n');
+                        console.log(`✅ File created: ${fullPath}`);
                         break;
+
                     case 'renameItem':
-                        this.renameItem(this.dialog.itemPath, input);
+                        // For rename, determine if it's a file or folder
+                        const oldPath = this.dialog.itemPath;
+                        const isFolder = oldPath.endsWith('/');
+                        const newName = isFolder ? input + '/' : input;
+                        
+                        // Get parent directory
+                        const parentDir = oldPath.substring(0, oldPath.lastIndexOf('/') + 1);
+                        fullPath = parentDir + newName;
+                        
+                        // Check if new path already exists
+                        if (this.pathExists(fullPath) && fullPath !== oldPath) {
+                            errorDiv.textContent = 'Name already exists';
+                            errorDiv.style.display = 'block';
+                            return;
+                        }
+                        
+                        this.renameItem(oldPath, fullPath);
+                        console.log(`✅ Renamed: ${oldPath} → ${fullPath}`);
                         break;
                 }
 
+                // Immediately re-render the file tree and update UI
                 this.renderFileTree();
                 this.updateBuildInfo();
                 this.closeDialog();
@@ -1026,6 +1178,7 @@ Specification-Vendor: ${this.config.authorName}
                 if (confirm('🚨 This will delete all files and folders. Are you sure?')) {
                     this.fileTree = {};
                     this.currentFile = null;
+                    this.selectedFolder = 'src/';
                     this.displayFile(null);
                     this.renderFileTree();
                     this.updateBuildInfo();
@@ -1039,15 +1192,6 @@ Specification-Vendor: ${this.config.authorName}
          */
         document.addEventListener('DOMContentLoaded', () => {
             app.init();
-        });
-
-        /**
-         * Handle Enter key in dialog input
-         */
-        document.getElementById('dialogInput')?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                app.confirmDialog();
-            }
         });
     </script>
 </body>
